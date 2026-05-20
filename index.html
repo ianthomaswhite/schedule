@@ -6,23 +6,24 @@
     <title>Learning Project Tracker</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
-        body { font-family: system-ui, sans-serif; margin: 2rem; background: #f4f4f5; color: #18181b; }
+        body { font-family: system-ui, sans-serif; margin: 2rem; background: #ffffff; color: #18181b; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; }
-        .card { background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e4e4e7; }
+        .card { background: #fcfcfc; padding: 1rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e4e4e7; }
         .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1rem; margin-top: 2rem; }
-        .day-col { background: #e4e4e7; padding: 1rem; border-radius: 8px; min-height: 200px; }
-        .slot { background: white; padding: 0.5rem; margin-top: 0.5rem; border-radius: 4px; font-size: 0.9em; border-left: 4px solid #3b82f6; }
+        .day-col { background: #f4f4f5; padding: 1rem; border-radius: 8px; min-height: 200px; }
+        .slot { background: white; padding: 0.5rem; margin-top: 0.5rem; border-radius: 4px; font-size: 0.9em; border-left: 4px solid #3b82f6; border: 1px solid #e4e4e7; }
         input, select, button { margin: 0.25rem 0; padding: 0.5rem; border: 1px solid #d4d4d8; border-radius: 4px; width: 100%; box-sizing: border-box; }
         .checkbox-group { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.5rem 0; }
         .checkbox-group label { display: flex; align-items: center; font-size: 0.9em; width: auto; }
         .checkbox-group input { width: auto; margin-right: 0.25rem; }
         button { background: #18181b; color: white; border: none; cursor: pointer; font-weight: 500; }
         button:hover { background: #3f3f46; }
-        button.secondary { background: #e4e4e7; color: #18181b; margin-top: 0.5rem; }
+        button.secondary { background: #e4e4e7; color: #18181b; }
+        button.danger { background: #fee2e2; color: #ef4444; }
         .archived { opacity: 0.5; }
         .week-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
         .week-row input[type="text"] { flex-grow: 1; }
-        .week-row input[type="checkbox"] { width: auto; }
+        .week-row input[type="checkbox"], .week-row button { width: auto; }
     </style>
 </head>
 <body>
@@ -57,7 +58,10 @@
             </div>
             
             <label style="font-size: 0.9em; display: block; margin-top: 0.5rem;">Time Slot (Optional)</label>
-            <input v-model="newProj.timeSlot" type="time">
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <input v-model="newProj.startTime" type="time"> to 
+                <input v-model="newProj.endTime" type="time">
+            </div>
             
             <button @click="addProject">Create Project</button>
         </div>
@@ -65,32 +69,62 @@
         <h2>Project Dashboard</h2>
         <div class="grid">
             <div v-for="p in projects" :key="p.id" class="card" :class="{ archived: p.isArchived }">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <h3 style="margin: 0 0 0.5rem 0;">{{ p.title }}</h3>
-                    <span style="font-size: 0.8em; padding: 0.2rem 0.5rem; background: #d4d4d8; border-radius: 12px;">
-                        {{ p.isComplete ? 'Complete' : 'Active' }}
-                    </span>
-                </div>
                 
-                <p style="margin: 0.2rem 0; font-size: 0.9em; color: #52525b;">
-                    <span v-if="p.length">{{ p.length }} {{ p.lengthType }} | </span>
-                    {{ p.days.join(', ') }} <span v-if="p.timeSlot">@ {{ p.timeSlot }}</span>
-                </p>
+                <div v-if="p.isEditing">
+                    <input v-model="p.title" placeholder="Project Title">
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input v-model.number="p.length" type="number" placeholder="Length">
+                        <select v-model="p.lengthType">
+                            <option value="pages">Pages</option>
+                            <option value="chapters">Chapters</option>
+                            <option value="lessons">Lessons</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="checkbox-group">
+                        <label v-for="day in daysOfWeek" :key="day">
+                            <input type="checkbox" :value="day" v-model="p.days"> {{ day.substring(0,3) }}
+                        </label>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <input type="time" v-model="p.startTime"> to <input type="time" v-model="p.endTime">
+                    </div>
+                    <button class="secondary" @click="p.isEditing = false; saveData()">Save Adjustments</button>
+                </div>
+
+                <div v-else>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <h3 style="margin: 0 0 0.5rem 0;">{{ p.title }}</h3>
+                        <span style="font-size: 0.8em; padding: 0.2rem 0.5rem; background: #e4e4e7; border-radius: 12px;">
+                            {{ p.isComplete ? 'Complete' : 'Active' }}
+                        </span>
+                    </div>
+                    
+                    <p style="margin: 0.2rem 0; font-size: 0.9em; color: #52525b;">
+                        <span v-if="p.length">{{ p.length }} {{ p.lengthType }} | </span>
+                        {{ p.days.join(', ') }} 
+                        <span v-if="p.startTime || p.endTime">
+                            @ {{ p.startTime || '?' }} - {{ p.endTime || '?' }}
+                        </span>
+                    </p>
+                </div>
                 
                 <div v-if="!p.isArchived" style="margin-top: 1rem; border-top: 1px solid #e4e4e7; padding-top: 1rem;">
                     <h4 style="margin: 0 0 0.5rem 0;">Schedule</h4>
                     <div v-for="(wk, idx) in p.schedule" :key="idx" class="week-row">
                         <input type="checkbox" v-model="wk.complete" @change="saveData">
-                        <span style="min-width: 60px; font-size: 0.9em;">Wk {{ wk.week }}:</span>
-                        <input v-if="p.scheduleType === 'manual'" type="text" v-model="wk.info" @blur="saveData" placeholder="Details...">
-                        <span v-else style="font-size: 0.9em;">{{ wk.info }}</span>
+                        <span style="min-width: 50px; font-size: 0.9em;">Wk {{ wk.week }}:</span>
+                        <input type="text" v-model="wk.info" @blur="saveData" placeholder="Details...">
+                        <button class="danger" @click="removeWeek(p, idx)" style="padding: 0.3rem 0.5rem; font-size: 0.8em;">X</button>
                     </div>
-                    <button v-if="p.scheduleType === 'manual'" class="secondary" @click="addWeek(p)">+ Add Week</button>
+                    <button class="secondary" @click="addWeek(p)">+ Add Week</button>
                 </div>
 
-                <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
-                    <button class="secondary" @click="toggleComplete(p)">Mark {{ p.isComplete ? 'Incomplete' : 'Complete' }}</button>
-                    <button class="secondary" @click="toggleArchive(p)">{{ p.isArchived ? 'Unarchive' : 'Archive' }}</button>
+                <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    <button style="flex: 1" class="secondary" @click="toggleComplete(p)">Mark {{ p.isComplete ? 'Incomplete' : 'Complete' }}</button>
+                    <button style="flex: 1" class="secondary" @click="toggleArchive(p)">{{ p.isArchived ? 'Unarchive' : 'Archive' }}</button>
+                    <button style="flex: 1" class="secondary" v-if="!p.isEditing" @click="p.isEditing = true">Edit</button>
+                    <button style="flex: 1" class="danger" @click="deleteProject(p.id)">Delete</button>
                 </div>
             </div>
         </div>
@@ -100,10 +134,17 @@
             <div v-for="day in daysOfWeek" :key="day" class="day-col">
                 <h3 style="margin-top: 0; text-align: center; border-bottom: 2px solid #a1a1aa; padding-bottom: 0.5rem;">{{ day }}</h3>
                 <div v-for="p in getProjectsForDay(day)" :key="p.id" class="slot" :style="{ opacity: p.isComplete ? 0.6 : 1 }">
-                    <div style="font-weight: 600; font-size: 0.85em; color: #3b82f6;">{{ p.timeSlot || 'Anytime' }}</div>
+                    <div style="font-weight: 600; font-size: 0.85em; color: #3b82f6;">
+                        <span v-if="p.startTime || p.endTime">{{ p.startTime || '?' }} - {{ p.endTime || '?' }}</span>
+                        <span v-else>Anytime</span>
+                    </div>
                     <div style="font-weight: 500;">{{ p.title }}</div>
                 </div>
             </div>
+        </div>
+
+        <div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid #e4e4e7;">
+            <button class="danger" style="max-width: 200px;" @click="resetData">Reset All Data</button>
         </div>
     </div>
 
@@ -117,7 +158,7 @@
                 
                 const newProj = ref({
                     title: '', length: null, lengthType: 'pages', scheduleType: 'manual', 
-                    targetWeeks: null, days: [], timeSlot: '', schedule: []
+                    targetWeeks: null, days: [], startTime: '', endTime: '', schedule: []
                 });
 
                 onMounted(() => {
@@ -147,15 +188,23 @@
                         ...newProj.value,
                         schedule,
                         isComplete: false,
-                        isArchived: false
+                        isArchived: false,
+                        isEditing: false
                     });
                     
-                    newProj.value = { title: '', length: null, lengthType: 'pages', scheduleType: 'manual', targetWeeks: null, days: [], timeSlot: '', schedule: [] };
+                    newProj.value = { title: '', length: null, lengthType: 'pages', scheduleType: 'manual', targetWeeks: null, days: [], startTime: '', endTime: '', schedule: [] };
                     saveData();
                 };
 
                 const addWeek = (project) => {
                     project.schedule.push({ week: project.schedule.length + 1, info: '', complete: false });
+                    saveData();
+                };
+
+                const removeWeek = (project, index) => {
+                    project.schedule.splice(index, 1);
+                    // Re-number remaining weeks
+                    project.schedule.forEach((wk, i) => wk.week = i + 1);
                     saveData();
                 };
 
@@ -169,15 +218,29 @@
                     saveData();
                 };
 
+                const deleteProject = (id) => {
+                    if (confirm('Are you sure you want to delete this project?')) {
+                        projects.value = projects.value.filter(p => p.id !== id);
+                        saveData();
+                    }
+                };
+
+                const resetData = () => {
+                    if (confirm('Are you sure you want to permanently erase all project data?')) {
+                        localStorage.removeItem('learningProjectsData');
+                        projects.value = [];
+                    }
+                };
+
                 const getProjectsForDay = (day) => {
                     return projects.value
                         .filter(p => !p.isArchived && p.days.includes(day))
-                        .sort((a, b) => (a.timeSlot || '24:00').localeCompare(b.timeSlot || '24:00'));
+                        .sort((a, b) => (a.startTime || '24:00').localeCompare(b.startTime || '24:00'));
                 };
 
                 return {
-                    daysOfWeek, projects, newProj, addProject, addWeek,
-                    toggleComplete, toggleArchive, getProjectsForDay, saveData
+                    daysOfWeek, projects, newProj, addProject, addWeek, removeWeek,
+                    toggleComplete, toggleArchive, deleteProject, resetData, getProjectsForDay, saveData
                 };
             }
         }).mount('#app');
