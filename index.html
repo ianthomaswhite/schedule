@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Learning Project Tracker</title>
+    <title>Project Tracker</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
         body { font-family: system-ui, sans-serif; margin: 2rem; background: #ffffff; color: #18181b; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; }
         .card { padding: 1rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1rem; margin-top: 2rem; }
+        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1rem; margin-bottom: 3rem; }
         .day-col { background: #f4f4f5; padding: 1rem; border-radius: 8px; min-height: 200px; border: 1px solid #d4d4d8; }
         .slot { padding: 0.5rem; margin-top: 0.5rem; border-radius: 4px; font-size: 0.9em; }
         input, select, button { margin: 0.25rem 0; padding: 0.5rem; border: 1px solid #18181b; border-radius: 4px; width: 100%; box-sizing: border-box; background: transparent; color: #18181b; }
@@ -43,7 +43,7 @@
 </head>
 <body>
     <div id="app">
-        <h1 style="margin-top: 0;">Learning Project Tracker</h1>
+        <h1 style="margin-top: 0;">Project Tracker</h1>
         
         <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
             <button @click="showModal = true" style="width: auto; padding: 0.5rem 1.5rem;">+ Add New Project</button>
@@ -99,88 +99,11 @@
             </div>
         </div>
 
-        <h2>Project Dashboard</h2>
-        <div class="grid">
-            <div v-for="p in projects" :key="p.id" class="card project-card" :class="{ archived: p.isArchived }" :style="{ background: p.color.bg, border: '2px solid ' + p.color.border, '--proj-border': p.color.border }">
-                
-                <div v-if="p.isEditing">
-                    <input v-model="p.title" placeholder="Project Title">
-                    <div class="color-picker">
-                        <div v-for="c in colors" :key="c.name" 
-                             class="color-option" 
-                             :style="{ background: c.bg, border: p.color.name === c.name ? '3px solid #18181b' : '1px solid ' + c.border }"
-                             @click="p.color = c"></div>
-                    </div>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <input v-model.number="p.length" type="number" placeholder="Length">
-                        <select v-model="p.lengthType">
-                            <option value="pages">Pages</option>
-                            <option value="chapters">Chapters</option>
-                            <option value="lessons">Lessons</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-                    <div class="checkbox-group">
-                        <label v-for="day in daysOfWeek" :key="day">
-                            <input type="checkbox" :value="day" v-model="p.days"> {{ day.substring(0,3) }}
-                        </label>
-                    </div>
-                    <div style="display: flex; gap: 0.5rem; align-items: center;">
-                        <input type="time" v-model="p.startTime"> to <input type="time" v-model="p.endTime">
-                    </div>
-                    <button @click="p.isEditing = false; saveData()">Save Adjustments</button>
-                </div>
-
-                <div v-else>
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                        <h3 style="margin: 0 0 0.5rem 0;">{{ p.title }}</h3>
-                        <span v-if="p.isComplete" style="font-size: 0.8em; padding: 0.2rem 0.5rem; border: 1px solid var(--proj-border); border-radius: 12px;">
-                            Complete
-                        </span>
-                    </div>
-                    
-                    <p style="margin: 0.2rem 0; font-size: 0.9em; font-weight: 500;">
-                        <span v-if="p.length">{{ p.length }} {{ p.lengthType }} | </span>
-                        {{ p.days.join(', ') }} 
-                        <span v-if="p.startTime || p.endTime">
-                            @ {{ p.startTime || '?' }} - {{ p.endTime || '?' }}
-                        </span>
-                    </p>
-                </div>
-                
-                <div v-if="!p.isArchived" style="margin-top: 1rem; padding-top: 0.5rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                        <h4 style="margin: 0;">Schedule</h4>
-                        <button style="width: auto; padding: 0.2rem 0.5rem; font-size: 0.8em;" @click="p.isScheduleOpen = !p.isScheduleOpen">
-                            {{ p.isScheduleOpen ? 'Collapse' : 'Expand' }}
-                        </button>
-                    </div>
-                    
-                    <div v-show="p.isScheduleOpen">
-                        <div v-for="(wk, idx) in p.schedule" :key="idx" class="week-row">
-                            <input type="checkbox" v-model="wk.complete" @change="saveData">
-                            <span style="min-width: 50px; font-size: 0.9em;">Wk {{ wk.week }}:</span>
-                            <input type="text" v-model="wk.info" @blur="saveData" placeholder="Details...">
-                            <button @click="removeWeek(p, idx)" style="padding: 0.3rem 0.5rem; font-size: 0.8em;">X</button>
-                        </div>
-                        <button @click="addWeek(p)">+ Add Week</button>
-                    </div>
-                </div>
-
-                <div class="bottom-actions" style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                    <button style="flex: 1" @click="toggleComplete(p)">{{ p.isComplete ? 'Not Done' : 'Done' }}</button>
-                    <button style="flex: 1" @click="toggleArchive(p)">{{ p.isArchived ? 'Unarchive' : 'Archive' }}</button>
-                    <button style="flex: 1" v-if="!p.isEditing" @click="p.isEditing = true">Edit</button>
-                    <button style="flex: 1" @click="deleteProject(p.id)">Delete</button>
-                </div>
-            </div>
-        </div>
-
-        <h2>Weekly Calendar</h2>
+        <h2>Schedule</h2>
         <div class="calendar">
             <div v-for="day in daysOfWeek" :key="day" class="day-col">
                 <h3 style="margin-top: 0; text-align: center; border-bottom: 2px solid #18181b; padding-bottom: 0.5rem;">{{ day }}</h3>
-                <div v-for="p in getProjectsForDay(day)" :key="p.id" class="slot" :style="{ background: p.color.bg, border: '2px solid ' + p.color.border, opacity: p.isComplete ? 0.6 : 1 }">
+                <div v-for="p in getProjectsForDay(day)" :key="p.id" class="slot" :style="{ background: p.color.bg, border: '2px solid ' + p.color.border }">
                     <div style="font-weight: 700; font-size: 0.85em; margin-bottom: 0.2rem;">
                         <span v-if="p.startTime || p.endTime">{{ p.startTime || '?' }} - {{ p.endTime || '?' }}</span>
                         <span v-else>Anytime</span>
@@ -189,10 +112,85 @@
                 </div>
             </div>
         </div>
+
+        <template v-for="section in [{title: 'Projects', list: activeProjects}, {title: 'Archived', list: archivedProjects}]" :key="section.title">
+            <h2 v-if="section.list.length > 0 || section.title === 'Projects'">{{ section.title }}</h2>
+            <div class="grid" v-if="section.list.length > 0 || section.title === 'Projects'" :style="{ marginBottom: section.title === 'Projects' ? '3rem' : '0' }">
+                <div v-for="p in section.list" :key="p.id" class="card project-card" :class="{ archived: p.isArchived }" :style="{ background: p.color.bg, border: '2px solid ' + p.color.border, '--proj-border': p.color.border }">
+                    
+                    <div v-if="p.isEditing">
+                        <input v-model="p.title" placeholder="Project Title">
+                        <div class="color-picker">
+                            <div v-for="c in colors" :key="c.name" 
+                                 class="color-option" 
+                                 :style="{ background: c.bg, border: p.color.name === c.name ? '3px solid #18181b' : '1px solid ' + c.border }"
+                                 @click="p.color = c"></div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input v-model.number="p.length" type="number" placeholder="Length">
+                            <select v-model="p.lengthType">
+                                <option value="pages">Pages</option>
+                                <option value="chapters">Chapters</option>
+                                <option value="lessons">Lessons</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="checkbox-group">
+                            <label v-for="day in daysOfWeek" :key="day">
+                                <input type="checkbox" :value="day" v-model="p.days"> {{ day.substring(0,3) }}
+                            </label>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <input type="time" v-model="p.startTime"> to <input type="time" v-model="p.endTime">
+                        </div>
+                        <button @click="p.isEditing = false; saveData()">Save Adjustments</button>
+                    </div>
+
+                    <div v-else>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <h3 style="margin: 0 0 0.5rem 0;">{{ p.title }}</h3>
+                        </div>
+                        
+                        <p style="margin: 0.2rem 0; font-size: 0.9em; font-weight: 500;">
+                            <span v-if="p.length">{{ p.length }} {{ p.lengthType }} | </span>
+                            {{ p.days.join(', ') }} 
+                            <span v-if="p.startTime || p.endTime">
+                                @ {{ p.startTime || '?' }} - {{ p.endTime || '?' }}
+                            </span>
+                        </p>
+                    </div>
+                    
+                    <div v-if="!p.isArchived" style="margin-top: 1rem; padding-top: 0.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <h4 style="margin: 0;">Schedule</h4>
+                            <button style="width: auto; padding: 0.2rem 0.5rem; font-size: 0.8em;" @click="p.isScheduleOpen = !p.isScheduleOpen">
+                                {{ p.isScheduleOpen ? 'Collapse' : 'Expand' }}
+                            </button>
+                        </div>
+                        
+                        <div v-show="p.isScheduleOpen">
+                            <div v-for="(wk, idx) in p.schedule" :key="idx" class="week-row">
+                                <input type="checkbox" v-model="wk.complete" @change="saveData">
+                                <span style="min-width: 50px; font-size: 0.9em;">Wk {{ wk.week }}:</span>
+                                <input type="text" v-model="wk.info" @blur="saveData" placeholder="Details...">
+                                <button @click="removeWeek(p, idx)" style="padding: 0.3rem 0.5rem; font-size: 0.8em;">X</button>
+                            </div>
+                            <button @click="addWeek(p)">+ Add Week</button>
+                        </div>
+                    </div>
+
+                    <div class="bottom-actions" style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        <button style="flex: 1" @click="toggleArchive(p)">{{ p.isArchived ? 'Restore' : 'Done' }}</button>
+                        <button style="flex: 1" v-if="!p.isEditing" @click="p.isEditing = true">Edit</button>
+                        <button style="flex: 1" @click="deleteProject(p.id)">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </template>
     </div>
 
     <script>
-        const { createApp, ref, onMounted } = Vue;
+        const { createApp, ref, computed, onMounted } = Vue;
 
         createApp({
             setup() {
@@ -210,6 +208,9 @@
                 const projects = ref([]);
                 const showModal = ref(false);
                 
+                const activeProjects = computed(() => projects.value.filter(p => !p.isArchived));
+                const archivedProjects = computed(() => projects.value.filter(p => p.isArchived));
+
                 const getInitialNewProj = () => ({
                     title: '', length: null, lengthType: 'pages', scheduleType: 'manual', 
                     targetWeeks: null, days: [], startTime: '', endTime: '', schedule: [],
@@ -251,7 +252,6 @@
                         id: Date.now(),
                         ...newProj.value,
                         schedule,
-                        isComplete: false,
                         isArchived: false,
                         isEditing: false,
                         isScheduleOpen: true
@@ -270,11 +270,6 @@
                 const removeWeek = (project, index) => {
                     project.schedule.splice(index, 1);
                     project.schedule.forEach((wk, i) => wk.week = i + 1);
-                    saveData();
-                };
-
-                const toggleComplete = (project) => {
-                    project.isComplete = !project.isComplete;
                     saveData();
                 };
 
@@ -304,8 +299,8 @@
                 };
 
                 return {
-                    daysOfWeek, colors, projects, newProj, showModal, addProject, addWeek, removeWeek,
-                    toggleComplete, toggleArchive, deleteProject, resetData, getProjectsForDay, saveData
+                    daysOfWeek, colors, projects, activeProjects, archivedProjects, newProj, showModal, 
+                    addProject, addWeek, removeWeek, toggleArchive, deleteProject, resetData, getProjectsForDay, saveData
                 };
             }
         }).mount('#app');
