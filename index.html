@@ -30,8 +30,10 @@
         .color-option { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; }
 
         /* Scoped styles for project cards */
-        .project-card button {
+        .project-card button, .project-card input, .project-card select {
             border-color: var(--proj-border);
+        }
+        .project-card button {
             font-weight: normal;
         }
         .bottom-actions button {
@@ -132,8 +134,8 @@
                 <div v-else>
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <h3 style="margin: 0 0 0.5rem 0;">{{ p.title }}</h3>
-                        <span style="font-size: 0.8em; padding: 0.2rem 0.5rem; border: 1px solid #18181b; border-radius: 12px;">
-                            {{ p.isComplete ? 'Complete' : 'Active' }}
+                        <span v-if="p.isComplete" style="font-size: 0.8em; padding: 0.2rem 0.5rem; border: 1px solid var(--proj-border); border-radius: 12px;">
+                            Complete
                         </span>
                     </div>
                     
@@ -146,7 +148,7 @@
                     </p>
                 </div>
                 
-                <div v-if="!p.isArchived" style="margin-top: 1rem; border-top: 1px solid #18181b; padding-top: 0.5rem;">
+                <div v-if="!p.isArchived" style="margin-top: 1rem; padding-top: 0.5rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                         <h4 style="margin: 0;">Schedule</h4>
                         <button style="width: auto; padding: 0.2rem 0.5rem; font-size: 0.8em;" @click="p.isScheduleOpen = !p.isScheduleOpen">
