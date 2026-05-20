@@ -28,6 +28,15 @@
         
         .color-picker { display: flex; gap: 0.5rem; margin: 0.5rem 0; }
         .color-option { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; }
+
+        /* Scoped styles for project cards */
+        .project-card button {
+            border-color: var(--proj-border);
+            font-weight: normal;
+        }
+        .bottom-actions button {
+            padding: 0.25rem 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -48,7 +57,7 @@
                 <div class="color-picker">
                     <div v-for="c in colors" :key="c.name" 
                          class="color-option" 
-                         :style="{ background: c.bg, border: newProj.color.name === c.name ? '3px solid #18181b' : `1px solid ${c.border}` }"
+                         :style="{ background: c.bg, border: newProj.color.name === c.name ? '3px solid #18181b' : '1px solid ' + c.border }"
                          @click="newProj.color = c"></div>
                 </div>
 
@@ -90,14 +99,14 @@
 
         <h2>Project Dashboard</h2>
         <div class="grid">
-            <div v-for="p in projects" :key="p.id" class="card" :class="{ archived: p.isArchived }" :style="{ background: p.color.bg, border: `2px solid ${p.color.border}` }">
+            <div v-for="p in projects" :key="p.id" class="card project-card" :class="{ archived: p.isArchived }" :style="{ background: p.color.bg, border: '2px solid ' + p.color.border, '--proj-border': p.color.border }">
                 
                 <div v-if="p.isEditing">
                     <input v-model="p.title" placeholder="Project Title">
                     <div class="color-picker">
                         <div v-for="c in colors" :key="c.name" 
                              class="color-option" 
-                             :style="{ background: c.bg, border: p.color.name === c.name ? '3px solid #18181b' : `1px solid ${c.border}` }"
+                             :style="{ background: c.bg, border: p.color.name === c.name ? '3px solid #18181b' : '1px solid ' + c.border }"
                              @click="p.color = c"></div>
                     </div>
                     <div style="display: flex; gap: 0.5rem;">
@@ -156,8 +165,8 @@
                     </div>
                 </div>
 
-                <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                    <button style="flex: 1" @click="toggleComplete(p)">Mark {{ p.isComplete ? 'Incomplete' : 'Complete' }}</button>
+                <div class="bottom-actions" style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    <button style="flex: 1" @click="toggleComplete(p)">{{ p.isComplete ? 'Not Done' : 'Done' }}</button>
                     <button style="flex: 1" @click="toggleArchive(p)">{{ p.isArchived ? 'Unarchive' : 'Archive' }}</button>
                     <button style="flex: 1" v-if="!p.isEditing" @click="p.isEditing = true">Edit</button>
                     <button style="flex: 1" @click="deleteProject(p.id)">Delete</button>
@@ -169,7 +178,7 @@
         <div class="calendar">
             <div v-for="day in daysOfWeek" :key="day" class="day-col">
                 <h3 style="margin-top: 0; text-align: center; border-bottom: 2px solid #18181b; padding-bottom: 0.5rem;">{{ day }}</h3>
-                <div v-for="p in getProjectsForDay(day)" :key="p.id" class="slot" :style="{ background: p.color.bg, border: `2px solid ${p.color.border}`, opacity: p.isComplete ? 0.6 : 1 }">
+                <div v-for="p in getProjectsForDay(day)" :key="p.id" class="slot" :style="{ background: p.color.bg, border: '2px solid ' + p.color.border, opacity: p.isComplete ? 0.6 : 1 }">
                     <div style="font-weight: 700; font-size: 0.85em; margin-bottom: 0.2rem;">
                         <span v-if="p.startTime || p.endTime">{{ p.startTime || '?' }} - {{ p.endTime || '?' }}</span>
                         <span v-else>Anytime</span>
@@ -211,7 +220,6 @@
                     const saved = localStorage.getItem('learningProjectsData');
                     if (saved) {
                         let parsed = JSON.parse(saved);
-                        // Ensure legacy data has a color and collapse state
                         parsed.forEach(p => {
                             if (!p.color) p.color = colors[0];
                             if (p.isScheduleOpen === undefined) p.isScheduleOpen = true;
