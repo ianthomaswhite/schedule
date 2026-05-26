@@ -32,6 +32,7 @@
         /* Scoped styles for project cards */
         .project-card button, .project-card input, .project-card select {
             border-color: var(--proj-border);
+            border-width: 2px;
         }
         .project-card button {
             font-weight: normal;
@@ -88,8 +89,8 @@
                 
                 <label style="font-size: 0.9em; display: block; margin-top: 0.5rem;">Time Slot (Military Time, Optional)</label>
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
-                    <input v-model="newProj.startTime" type="time"> to 
-                    <input v-model="newProj.endTime" type="time">
+                    <input v-model="newProj.startTime" type="text" placeholder="00:00"> to 
+                    <input v-model="newProj.endTime" type="text" placeholder="00:00">
                 </div>
                 
                 <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
@@ -141,7 +142,7 @@
                             </label>
                         </div>
                         <div style="display: flex; gap: 0.5rem; align-items: center;">
-                            <input type="time" v-model="p.startTime"> to <input type="time" v-model="p.endTime">
+                            <input type="text" v-model="p.startTime" placeholder="00:00"> to <input type="text" v-model="p.endTime" placeholder="00:00">
                         </div>
                         <button @click="p.isEditing = false; saveData()">Save Adjustments</button>
                     </div>
